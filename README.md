@@ -1,284 +1,96 @@
-# WFU Base AWS Cloud Development Kit (CDK) TypeScript Pipeline
-
-The pipeline code has been created so that it needs no changes to work for any application. All application specific settings are handled in the `app-vars.ts` file in your application root directory.
-
-## Quick Start
-
-There are 3 pipelines set up with this code:
-* DevStack
-* UatStack
-* ProdStack
-
-### Setup
-
-1. In your app, clone this repo into a directory named `pipeline`. The directory should be at the root of your app.
-
-   ```bash
-   git clone git@github.com:wakeforestuniversity/cdk-typescript-pipeline-base.git pipeline
-   ```
-
-2. Install the pipeline dependencies by running:
-
-   ```bash
-   cd pipeline
-   npm install
-   ```
-
-   **NOTE: Do not run npm update. The package-lock.json is checked in to ensure those versions are used so nothing breaks.**
-
-3. If there is no `app-vars.ts` file in the root of your app, create one and add this code:
-
-   ```js
-   export const sAppBucketSlug = 'app-template'; // Any length
-   export const sAppInitials = 'AT'; // Max 3 letters
-   export const sRepositoryName = 'aws-cdk-app-template';
-   ```
-
-4. Edit the values in `app-vars.ts` to match your app.
-
-5. Prepare the pipeline code for deployment by running:
-
-   ```bash
-   npm run build
-   ```
-
-6. Now you are ready to deploy your pipeline stacks.
-
-### Upgrade Instructions
-
-1. In your app, do these commands to pull in and apply any updates to the pipeline for your app.
-
-   ```bash
-   cd pipeline
-   git checkout master
-   git pull origin master
-   npm run build
-   ```
-   
-2. Next you need to redeploy your stacks using the command example below.
-    
-   ```bash
-   cdk deploy {DevStack|UatStack|ProdStack}
-   ```
-
-### Useful commands
-
-* `npm run build` compile typescript to js
-* `npm run watch` watch for changes and compile
-* `npm run test` perform the jest unit tests
-* `cdk deploy` deploy this stack to your default AWS account/region
-* `cdk diff` compare deployed stack with current state
-* `cdk synth` emits the synthesized CloudFormation template
-* `cdk destroy` destory this stack
-
-### Deploying a Stack
-
-> If you run into permissions issues, follow [these steps](https://docs.google.com/document/d/1MDQMvf-IraPKrxB76-5CEfj1FLw64PVaw8s-WC-VLGw/edit?usp=sharing) to get more AWS permissions granted to your account.
-
-To deploy a stack add the stack name after the deploy command as shown below.
-
-Run this from the `pipeline` directory.
-
-```bash
-cdk deploy DevStack
-```
-
-### Deleting a Stack
-
-**NOTE: Delete the APP stack before you delete the CI stack or you'll not be able to delete the APP stack.**
-
-To delete a stack include the stack name after the destroy command as shown below.
-
-Run this from the `pipeline` directory.
-
-```bash
-cdk destroy DevStack
-```
-
-Don't delete a stack in the console because we don't have the proper permissions there and you'll get a messsage that you don't have permission to delete the roles that were created for the stack.
-
-### Changing the Pipeline Code
-
-Anytime you change the code in the `bin/pipeline.ts`, `lib/pipeline_stack.ts`, or `pipeline_vars.ts` files you need to run this commend to build the other files.
-
-Run this from the `pipeline` directory.
-
-```bash
-npm run build
-```
-
-## File Structure
-
-The pipeline file structure should look like this after you've completed the setup steps for your application.
-
-```
-/
-  /pipeline
-    /bin
-      pipeline.d.ts
-      pipeline.js
-      pipeline.ts
-    /lib
-      pipeline_stack.d.ts
-      pipeline_stack.js
-      pipeline_stack.ts
-    /node_modules
-    /test
-      pipeline.test.d.ts
-      pipeline.test.js
-      pipeline.test.ts
-    .gitignore
-    .npmignore
-    cdk.json
-    CHANGELOG.md
-    jest.config.js
-    package-lock.json
-    package.json
-    pipeline-vars.d.ts
-    pipeline-vars.js
-    pipeline-vars.ts
-    README.md
-    tsconfig.json
-    VERSION
-```
-
-### cdk.json
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-### jest.config.js
-
-The `jest.config.js` file sets configuration for testing with Jest.
-
-### pipeline-vars.ts
-
-The `pipeline-vars.ts` file defines variables needed for pipeline to be scoped to the application.
-
-It uses the app-vars.ts from your app which should look something like this:
-
-```js
-export const sAppBucketSlug = 'serverless-template'; // Any length
-export const sAppInitials = 'ST'; // Max 3 letters
-export const sRepositoryName = 'aws-cdk-app-template';
-```
-
-### tsconfig.json
-
-The `tsconfig.json` file sets configuration for translating TypeScript to browser readable JavaScript.
-
-## How the Pipeline Works
-
-So how this works is this line in the `cdk.json` tells the `cdk deploy` command to run this.
-
-```json
-  "app": "npx ts-node --prefer-ts-exts bin/pipeline.ts",
-```
-
-### PipelineStack
-
-And in the [pipeline.ts](https://github.com/wakeforestuniversity/cdk-typescript-pipeline-base/blob/master/bin/pipeline.ts) file you'll notice this import statement.
-
-```js
-import { PipelineStack } from '../lib/pipeline-stack';
-```
-
-The `pipeline-stack.ts` file defines the PipelineStack class.
-
-```js
-export class PipelineStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps, branch?: string) {
-    super(scope, id, props);
-
-    if (branch == undefined) {
-      branch = 'DEV';
-    }
-    const sBranchName = branch.toLowerCase();
-    this.buildPipeline(sBranchName);
-  }
-```
-
-This extends [cdk.Stack](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_core.Stack.html) where cdk is defined by this line:
-
-```js
-import * as cdk from '@aws-cdk/core';
-```
-
-So there are 4 arguments for the PipelineStack:
-* scope: cdk.Construct,
-* id: string, props?:
-* props?: cdk.StackProps,
-* branch?: string
-
-? after an argument means it is optional. The first 3 were already there. I added the branch argument.
-
-### Instantiating PipelineStack
-
-Here in `pipeline.ts` we are instantiating `PipelineStack` 3 times to build each of our 3 stacks:
-
-```js
-new PipelineStack(app, 'DevStack',  {
-    stackName: oApp.sPipelineStackName + '-DEV',
-    terminationProtection: true,
-}, 'DEV');
-
-new PipelineStack(app, 'UatStack',  {
-    stackName: oApp.sPipelineStackName + '-UAT',
-    terminationProtection: true,
-}, 'UAT');
-
-new PipelineStack(app, 'ProdStack',  {
-    stackName: oApp.sPipelineStackName + '-PROD',
-    terminationProtection: true,
-}, 'PROD');
-```
-
-### PipelineStack Arguments
-
-#### Scope
-
-The first argument is `scope` which is defined as being of type cdk.Construct.
-
-For the scope we instantiate the [cdk.App](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_core.App.html) class.
-
-```js
-const app = new cdk.App();
-```
-
-#### Id
-
-The second argument is id which is defined as type string.
-
-Unless you specify a stack name the id will be used in defining that. It is also used by `cdk deploy` to indicate which stack to build. Because we are setting a stack name we can make the `id` something more generic so no matter what app you are in the deploy statements for each environment are the same.
-
-Currently the three stack ids are:
-* DevStack
-* UatStack
-* ProdStack
-
-#### Props
-
-The third argument is stack props. It must be of type [cdk.StackProps](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_core.StackProps.html)
-
-Here we are defining 2 of the stack props:
-* stackName
-* terminationProtection
-
-##### Stack Name
-
-Near the top of this file you'll see this line:
-
-```js
-import * as oApp from './../pipeline-vars';
-```
-
-This is pulling in the pipeline-vars that are exported, but in this file, only one is being used.
-
-```js
-export const sPipelineStackName = sAppName + '-CICD';
-```
-
-We are using sPipelineStackName plus the environment to give each stack a unique namespaced name in Cloudformation.
-
-##### Termination Protection
-
-We are also turning on termination protection so that you can't accidentally delete the stacks. To intentionally delete them you have to go into the console and turn that off.
+sam-app
+This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+
+hello-world - Code for the application's Lambda function.
+events - Invocation events that you can use to invoke the function.
+hello-world/tests - Unit tests for the application code.
+template.yaml - A template that defines the application's AWS resources.
+The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the template.yaml file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+
+If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.
+The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
+
+CLion
+GoLand
+IntelliJ
+WebStorm
+Rider
+PhpStorm
+PyCharm
+RubyMine
+DataGrip
+VS Code
+Visual Studio
+Deploy the sample application
+The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
+
+To use the SAM CLI, you need the following tools.
+
+SAM CLI - Install the SAM CLI
+Node.js - Install Node.js 10, including the NPM package management tool.
+Docker - Install Docker community edition
+To build and deploy your application for the first time, run the following in your shell:
+
+sam build
+sam deploy --guided
+The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
+
+Stack Name: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
+AWS Region: The AWS region you want to deploy your app to.
+Confirm changes before deploy: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
+Allow SAM CLI IAM role creation: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the CAPABILITY_IAM value for capabilities must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass --capabilities CAPABILITY_IAM to the sam deploy command.
+Save arguments to samconfig.toml: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run sam deploy without parameters to deploy changes to your application.
+You can find your API Gateway Endpoint URL in the output values displayed after deployment.
+
+Use the SAM CLI to build and test locally
+Build your application with the sam build command.
+
+sam-app$ sam build
+The SAM CLI installs dependencies defined in hello-world/package.json, creates a deployment package, and saves it in the .aws-sam/build folder.
+
+Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the events folder in this project.
+
+Run functions locally and invoke them with the sam local invoke command.
+
+sam-app$ sam local invoke HelloWorldFunction --event events/event.json
+The SAM CLI can also emulate your application's API. Use the sam local start-api to run the API locally on port 3000.
+
+sam-app$ sam local start-api
+sam-app$ curl http://localhost:3000/
+The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The Events property on each function's definition includes the route and method for each path.
+
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+Add a resource to your application
+The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in the SAM specification, you can use standard AWS CloudFormation resource types.
+
+Fetch, tail, and filter Lambda function logs
+To simplify troubleshooting, SAM CLI has a command called sam logs. sam logs lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
+
+NOTE: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
+
+sam-app$ sam logs -n HelloWorldFunction --stack-name sam-app --tail
+You can find more information and examples about filtering Lambda function logs in the SAM CLI Documentation.
+
+Tests
+Tests are defined in the hello-world/tests folder in this project. Use NPM to install the Mocha test framework and run tests.
+
+sam-app$ cd hello-world
+hello-world$ npm install
+# Unit test
+hello-world$ npm run test
+# Integration test, requiring deploying the stack first.
+# Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
+hello-world$ AWS_SAM_STACK_NAME=<stack-name> npm run integ-test
+Cleanup
+To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
+
+aws cloudformation delete-stack --stack-name sam-app
+Resources
+See the AWS SAM developer guide for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
+
+Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: AWS Serverless Application Repository main page
