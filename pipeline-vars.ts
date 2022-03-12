@@ -5,8 +5,8 @@ import {
     aStackEnvironments
 } from './../app-vars';
 
-const sPrefixSlug = 'wfu-ait'
-const sAppPrefix = 'WfuAit'
+const sPrefixSlug = '[app prefix lowercase]'
+const sAppPrefix = '[app prefix snake case]'
 export const sAppName = sAppPrefix + sAppInitials;
 export const sPipelineStackName = `cdk-${sAppName}-CI`;
 export const sLamdbaStackName = `cdk-${sAppName}-App`;
