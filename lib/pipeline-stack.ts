@@ -75,8 +75,8 @@ export class PipelineStack extends cdk.Stack {
    */
   prependPipelineStackName(sName: string ) : string
   {
-      const sPipelineStackName = this.stackName;
-      return sPipelineStackName + '-' + sName;
+    const sPipelineStackName = this.stackName;
+    return sPipelineStackName + '-' + sName;
   }
   
   /**
