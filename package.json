@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@aws-cdk/aws-codebuild": "^1.114.0",
-    "@aws-cdk/aws-codecommit": "^1.114.0",
     "@aws-cdk/aws-codedeploy": "^1.114.0",
     "@aws-cdk/aws-codepipeline-actions": "^1.114.0",
     "@aws-cdk/aws-s3": "^1.114.0",
