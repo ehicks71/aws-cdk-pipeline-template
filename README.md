@@ -7,7 +7,7 @@ The pipeline code has been created so that it needs no changes to work for any a
 1. In your app, clone this repo into a directory named `pipeline`. The directory should be at the root of your app.
 
    ```bash
-   git clone git@github.com:wakeforestuniversity/cdk-typescript-pipeline-base.git pipeline
+   git clone git@github.com:ehicks71/aws-sam-cdk-template.git pipeline
    ```
 
 2. Install the pipeline dependencies by running:
@@ -66,8 +66,6 @@ The pipeline code has been created so that it needs no changes to work for any a
 
 ### Deploying a Stack
 
-> If you run into permissions issues, follow [these steps](https://docs.google.com/document/d/1MDQMvf-IraPKrxB76-5CEfj1FLw64PVaw8s-WC-VLGw/edit?usp=sharing) to get more AWS permissions granted to your account.
-
 To deploy a stack add the stack name after the deploy command as shown below.
 
 Run this from the `pipeline` directory.
@@ -87,8 +85,6 @@ Run this from the `pipeline` directory.
 ```bash
 cdk destroy [stackname]
 ```
-
-Don't delete a stack in the console because we don't have the proper permissions there and you'll get a messsage that you don't have permission to delete the roles that were created for the stack.
 
 ### Changing the Pipeline Code
 
@@ -169,7 +165,7 @@ So how this works is this line in the `cdk.json` tells the `cdk deploy` command 
 
 ### PipelineStack
 
-And in the [pipeline.ts](https://github.com/wakeforestuniversity/cdk-typescript-pipeline-base/blob/master/bin/pipeline.ts) file you'll notice this import statement.
+And in the pipeline.ts file you'll notice this import statement.
 
 ```js
 import { PipelineStack } from '../lib/pipeline-stack';
@@ -206,23 +202,13 @@ So there are 4 arguments for the PipelineStack:
 
 ### Instantiating PipelineStack
 
-Here in `pipeline.ts` we are instantiating `PipelineStack` 3 times to build each of our 3 stacks:
+Here in `pipeline.ts` we are instantiating `PipelineStack` for one stack:
 
 ```js
 new PipelineStack(app, 'DevStack',  {
     stackName: oApp.sPipelineStackName + '-DEV',
     terminationProtection: true,
 }, 'DEV');
-
-new PipelineStack(app, 'UatStack',  {
-    stackName: oApp.sPipelineStackName + '-UAT',
-    terminationProtection: true,
-}, 'UAT');
-
-new PipelineStack(app, 'ProdStack',  {
-    stackName: oApp.sPipelineStackName + '-PROD',
-    terminationProtection: true,
-}, 'PROD');
 ```
 
 ### PipelineStack Arguments
@@ -241,13 +227,6 @@ const app = new cdk.App();
 
 The second argument is id which is defined as type string.
 
-Unless you specify a stack name the id will be used in defining that. It is also used by `cdk deploy` to indicate which stack to build. Because we are setting a stack name we can make the `id` something more generic so no matter what app you are in the deploy statements for each environment are the same.
-
-Currently the three stack ids are:
-* DevStack
-* UatStack
-* ProdStack
-
 #### Props
 
 The third argument is stack props. It must be of type [cdk.StackProps](https://docs.aws.amazon.com/cdk/api/latest/docs/@aws-cdk_core.StackProps.html)
@@ -258,7 +237,7 @@ Here we are defining 2 of the stack props:
 
 ##### Stack Name
 
-Near the top of this file you'll see this line:
+Near the top of this file is this line:
 
 ```js
 import * as oApp from './../pipeline-vars';
@@ -270,8 +249,8 @@ This is pulling in the pipeline-vars that are exported, but in this file, only o
 export const sPipelineStackName = sAppName + '-CICD';
 ```
 
-We are using sPipelineStackName plus the environment to give each stack a unique namespaced name in Cloudformation.
+The code uses sPipelineStackName plus the environment to give each stack a unique namespaced name in Cloudformation.
 
 ##### Termination Protection
 
-We are also turning on termination protection so that you can't accidentally delete the stacks. To intentionally delete them you have to go into the console and turn that off.
+The code also turns on termination protection so that you can't accidentally delete the stacks. To intentionally delete them you have to go into the console and turn that off.
