@@ -1,4 +1,4 @@
-# SAM/CDK Application
+# AWS CDK Pipeline Template
 
 The pipeline code has been created so that it needs no changes to work for any application. All application specific settings are handled in the `app-vars.ts` file in your application root directory.
 
@@ -7,7 +7,7 @@ The pipeline code has been created so that it needs no changes to work for any a
 1. In your app, clone this repo into a directory named `pipeline`. The directory should be at the root of your app.
 
    ```bash
-   git clone git@github.com:ehicks71/aws-sam-cdk-template.git pipeline
+   git clone git@github.com:ehicks71/aws-cdk-pipeline-template.git pipeline
    ```
 
 2. Install the pipeline dependencies by running:
